@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Data Admin Panel</title>
+    <!-- Include CSS here -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #userTable {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #userTable th, #userTable td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        #userTable th {
+            background-color: #333;
+            color: #fff;
+        }
+
+        #userTable tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .action-buttons button {
+            margin-right: 5px;
+            padding: 6px 12px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .action-buttons button:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+        #totalUsers {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .manage-posts-button {
+            text-align: right;
+            margin-right: 20px;
+        }
+
+        .manage-posts-button a {
+            text-decoration: none;
+            background-color: #2196F3;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+
+        .manage-posts-button a:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="manage-posts-button">
+        <a href="http://www.fdsfs.com" target="_blank">Manage Posts</a>
+    </div>
+    <h1>User Data Admin Panel</h1>
+    <div id="totalUsers"></div>
+    <table id="userTable">
+        <!-- Table headers go here -->
+    </table>
+    <!-- Include JavaScript here -->
+    <script src="https://www.gstatic.com/firebasejs/8.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.8.0/firebase-database.js"></script>
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBt-3xPszDlyQlIOw2fcyyVC5KnsuWkP3Y",
+            authDomain: "flip-vedio.firebaseapp.com",
+            databaseURL: "https://flip-vedio-default-rtdb.firebaseio.com",
+            projectId: "flip-vedio",
+            storageBucket: "flip-vedio.appspot.com",
+            messagingSenderId: "683500498033",
+            appId: "1:683500498033:web:898ff89cb9c0bbb4b4ffd0",
+            measurementId: "G-TGELEK88XN"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Reference to the users' data in Firebase
+        const usersRef = database.ref("users");
+
+        // Function to populate the table with user data
+        function populateTable(snapshot) {
+            const userTable = document.getElementById("userTable");
+            const totalUsers = document.getElementById("totalUsers");
+
+            // Clear the table before populating
+            userTable.innerHTML = "";
+            totalUsers.textContent = `Total Users: ${snapshot.numChildren()}`;
+
+            // Create table headers with Blocked, Verify, and Actions columns
+            const tableHeaders = "<tr><th>Name</th><th>Username</th><th>Email</th><th>UID</th><th>Bio</th><th>Gender</th><th>Age</th><th>Blocked</th><th>Verify</th></tr>";
+            userTable.innerHTML += tableHeaders;
+
+            // Iterate through user data and populate the table
+            for (const key in snapshot.val()) {
+                const userData = snapshot.val()[key];
+                const { yourname, username, email, uid, bio, gender, age, verify, blocked } = userData;
+
+                const verifyButtonText = verify ? "Verified" : "Unverified";
+                const blockedButtonText = blocked ? "Blocked" : "Unblocked";
+
+                const tableRow = `
+                    <tr>
+                        <td>${yourname}</td>
+                        <td>${username}</td>
+                        <td>${email}</td>
+                        <td>${uid}</td>
+                        <td>${bio}</td>
+                        <td>${gender}</td>
+                        <td>${age}</td>
+                        <td class="action-buttons">
+                            <button data-userid="${key}" data-field="blocked" data-value="true">${blockedButtonText}</button>
+                            <button data-userid="${key}" data-field="blocked" data-value="false">${blockedButtonText}</button>
+                        </td>
+                        <td class="action-buttons">
+                            <button data-userid="${key}" data-field="verify" data-value="true">${verifyButtonText}</button>
+                            <button data-userid="${key}" data-field="verify" data-value="false">${verifyButtonText}</button>
+                        </td>
+                    </tr>
+                `;
+                userTable.innerHTML += tableRow;
+            }
+
+            // Attach event listeners to the buttons for both blocked and verify actions
+            const buttons = document.querySelectorAll("button[data-field]");
+            buttons.forEach((button) => {
+                button.addEventListener("click", (event) => {
+                    const userId = event.target.getAttribute("data-userid");
+                    const field = event.target.getAttribute("data-field");
+                    const value = event.target.getAttribute("data-value");
+
+                    // Update the field (either blocked or verify) in Firebase
+                    updateField(userId, field, value);
+                });
+            });
+        }
+
+        // Listen for changes in user data
+        usersRef.on("value", (snapshot) => {
+            populateTable(snapshot);
+        });
+
+        // Function to update user blocked or verify status
+        function updateField(userId, field, value) {
+            const updates = {};
+
+            // Set the field (either blocked or verify) to the specified value
+            updates[`${userId}/${field}`] = value === "true"; // Convert string "true" to boolean true
+
+            usersRef.update(updates);
+        }
+    </script>
+</body>
+</html>
