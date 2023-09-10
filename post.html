@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Data Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #totalPosts {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        #postTable {
+            width: 80%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #postTable th, #postTable td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        #postTable th {
+            background-color: #333;
+            color: #fff;
+        }
+
+        #postTable tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .delete-button {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Post Data Admin Panel</h1>
+    <div id="totalPosts">Total Posts: Loading...</div>
+    <table id="postTable">
+        <tr>
+            <th>Post Key</th>
+            <th>UID</th>
+            <th>Post Image</th>
+            <th>Username</th>
+            <th>Verify</th>
+            <th>Avatar</th>
+            <th>Action</th>
+        </tr>
+        <!-- Post data rows will be dynamically added here -->
+    </table>
+
+    <script src="https://www.gstatic.com/firebasejs/8.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.8.0/firebase-database.js"></script>
+    <script>
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBt-3xPszDlyQlIOw2fcyyVC5KnsuWkP3Y",
+            authDomain: "flip-vedio.firebaseapp.com",
+            databaseURL: "https://flip-vedio-default-rtdb.firebaseio.com",
+            projectId: "flip-vedio",
+            storageBucket: "flip-vedio.appspot.com",
+            messagingSenderId: "683500498033",
+            appId: "1:683500498033:web:898ff89cb9c0bbb4b4ffd0",
+            measurementId: "G-TGELEK88XN"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Reference to the post data in Firebase
+        const postsRef = database.ref("posts");
+
+        // Function to populate the table with post data
+        function populateTable(snapshot) {
+            const postTable = document.getElementById("postTable");
+            const totalPosts = document.getElementById("totalPosts");
+
+            // Clear the table before populating
+            postTable.querySelector("tbody").innerHTML = "";
+
+            // Initialize the total post count
+            let postCount = 0;
+
+            // Iterate through post data and populate the table
+            snapshot.forEach((childSnapshot) => {
+                const postData = childSnapshot.val();
+                const { post_key, uid, post_image, username, verify, avatar } = postData;
+
+                const tableRow = `
+                    <tr>
+                        <td>${post_key}</td>
+                        <td>${uid}</td>
+                        <td><img src="${post_image}" alt="Post Image" width="100"></td>
+                        <td>${username}</td>
+                        <td>${verify}</td>
+                        <td><img class="avatar" src="${avatar}" alt="Avatar"></td>
+                        <td>
+                            <button class="delete-button" data-postkey="${post_key}">Delete</button>
+                        </td>
+                    </tr>
+                `;
+                postTable.querySelector("tbody").innerHTML += tableRow;
+
+                // Increment the post count
+                postCount++;
+            });
+
+            // Update the total post count
+            totalPosts.textContent = `Total Posts: ${postCount}`;
+        }
+
+        // Listen for changes in post data
+        postsRef.on("value", (snapshot) => {
+            populateTable(snapshot);
+        });
+
+        // Delete post when the delete button is clicked
+        postTable.addEventListener("click", (event) => {
+            if (event.target.classList.contains("delete-button")) {
+                const postKey = event.target.getAttribute("data-postkey");
+                deletePost(postKey);
+            }
+        });
+
+        // Function to delete a post
+        function deletePost(postKey) {
+            if (confirm("Are you sure you want to delete this post?")) {
+                postsRef.child(postKey).remove();
+            }
+        }
+    </script>
+</body>
+</html>
