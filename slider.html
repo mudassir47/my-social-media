@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image and Link Upload to Firebase</title>
+    <style>
+        /* Reset some default styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Center the content */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Style the header */
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        /* Style the forms */
+        form {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"], input[type="text"] {
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Style the image containers */
+        .image-container {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .image-container img {
+            max-width: 100px;
+            max-height: 100px;
+            margin-right: 10px;
+        }
+        .slider-container {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Style for the individual slides */
+        .slider-slide {
+            display: none;
+        }
+
+        /* Style for the images within the slider */
+        .slider-slide img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image and Link Upload to Firebase</h1>
+
+        <div class="slider-container" id="imageSlider">
+            <!-- Images will be displayed here -->
+        </div>
+        <!-- Image Upload Forms -->
+        <form id="imageUploadForm1">
+            <input type="file" id="imageInput1">
+            <button type="submit">Upload Image 1</button>
+        </form>
+
+        <form id="imageUploadForm2">
+            <input type="file" id="imageInput2">
+            <button type="submit">Upload Image 2</button>
+        </form>
+
+        <form id="imageUploadForm3">
+            <input type="file" id="imageInput3">
+            <button type="submit">Upload Image 3</button>
+        </form>
+
+        <form id="imageUploadForm4">
+            <input type="file" id="imageInput4">
+            <button type="submit">Upload Image 4</button>
+        </form>
+
+        <form id="imageUploadForm5">
+            <input type="file" id="imageInput5">
+            <button type="submit">Upload Image 5</button>
+        </form>
+
+        <!-- Link Upload Forms -->
+        <form id="linkUploadForm1">
+            <input type="text" id="linkInput1" placeholder="Enter Link 1">
+            <button type="submit">Upload Link 1</button>
+        </form>
+
+        <form id="linkUploadForm2">
+            <input type="text" id="linkInput2" placeholder="Enter Link 2">
+            <button type="submit">Upload Link 2</button>
+        </form>
+
+        <form id="linkUploadForm3">
+            <input type="text" id="linkInput3" placeholder="Enter Link 3">
+            <button type="submit">Upload Link 3</button>
+        </form>
+
+        <form id="linkUploadForm4">
+            <input type="text" id="linkInput4" placeholder="Enter Link 4">
+            <button type="submit">Upload Link 4</button>
+        </form>
+
+        <form id="linkUploadForm5">
+            <input type="text" id="linkInput5" placeholder="Enter Link 5">
+            <button type="submit">Upload Link 5</button>
+        </form>
+
+        <!-- Image Containers -->
+        <div class="image-container" id="imageContainer1"></div>
+        <div class="image-container" id="imageContainer2"></div>
+        <div class="image-container" id="imageContainer3"></div>
+        <div class="image-container" id="imageContainer4"></div>
+        <div class="image-container" id="imageContainer5"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.8.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.8.0/firebase-storage.js"></script>
+    <script>
+        // Firebase configuration (replace with your own config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBt-3xPszDlyQlIOw2fcyyVC5KnsuWkP3Y",
+            authDomain: "flip-vedio.firebaseapp.com",
+            databaseURL: "https://flip-vedio-default-rtdb.firebaseio.com",
+            projectId: "flip-vedio",
+            storageBucket: "flip-vedio.appspot.com",
+            messagingSenderId: "683500498033",
+            appId: "1:683500498033:web:898ff89cb9c0bbb4b4ffd0",
+            measurementId: "G-TGELEK88XN"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Function to upload an image and update the database
+        function uploadImage(imageInput, key, containerId) {
+            const file = imageInput.files[0];
+            if (file) {
+                const storageRef = firebase.storage().ref();
+                const imageRef = storageRef.child("images/" + file.name);
+
+                // Upload the file to Firebase Storage
+                const uploadTask = imageRef.put(file);
+
+                uploadTask.then((snapshot) => {
+                    // Upload completed successfully
+                    console.log("Image uploaded successfully.");
+
+                    // Get the download URL of the uploaded image
+                    imageRef.getDownloadURL().then((downloadURL) => {
+                        // Update the Realtime Database with the download URL
+                        const databaseRef = firebase.database().ref("slider/slider");
+                        const mm = {};
+                        mm[key] = downloadURL;
+                        return databaseRef.update(mm);
+                    }).then(() => {
+                        console.log(`Image URL added to the database under key: ${key}`);
+
+                        // Create an image element to display the uploaded image
+                        const imageContainer = document.getElementById(containerId);
+                        const img = document.createElement("img");
+                        img.src = downloadURL;
+                        imageContainer.appendChild(img);
+                    }).catch((error) => {
+                        console.error("Error:", error);
+                    });
+                });
+            } else {
+                console.error("No file selected.");
+            }
+        }
+
+        // Function to upload a link to the database
+        function uploadLink(link, key) {
+            const databaseRef = firebase.database().ref("slider/slider");
+            const m = {};
+            m[key] = link;
+            databaseRef.update(m).then(() => {
+                console.log(`Link added to the database under key: ${key}`);
+            }).catch((error) => {
+                console.error("Error updating the database:", error);
+            });
+        }
+
+        // Event listeners for image forms
+        const imageForms = [
+            document.getElementById("imageUploadForm1"),
+            document.getElementById("imageUploadForm2"),
+            document.getElementById("imageUploadForm3"),
+            document.getElementById("imageUploadForm4"),
+            document.getElementById("imageUploadForm5")
+        ];
+
+        for (let i = 0; i < imageForms.length; i++) {
+            const form = imageForms[i];
+            const imageInput = form.querySelector("input[type=file]");
+            form.addEventListener("submit", (e) => {
+                e.preventDefault(); // Prevent the default form submission behavior
+                uploadImage(imageInput, `image${i + 1}`, `imageContainer${i + 1}`);
+            });
+        }
+
+        // Event listeners for link forms
+        const linkForms = [
+            document.getElementById("linkUploadForm1"),
+            document.getElementById("linkUploadForm2"),
+            document.getElementById("linkUploadForm3"),
+            document.getElementById("linkUploadForm4"),
+            document.getElementById("linkUploadForm5")
+        ];
+
+        for (let i = 0; i < linkForms.length; i++) {
+            const form = linkForms[i];
+            const linkInput = form.querySelector("input[type=text]");
+            form.addEventListener("submit", (e) => {
+                e.preventDefault(); // Prevent the default form submission behavior
+                const link = linkInput.value;
+                if (link.trim() !== "") {
+                    uploadLink(link, `link${i + 1}`);
+                    linkInput.value = ""; // Clear the input field
+                } else {
+                    console.error(`Link ${i + 1} is empty.`);
+                }
+            });
+        }
+        function createImageSlider() {
+            const imageSlider = document.getElementById("imageSlider");
+            let currentSlide = 0;
+            const slides = document.querySelectorAll(".slider-slide");
+
+            // Display the first slide
+            slides[currentSlide].style.display = "block";
+
+            // Function to change slides
+            function nextSlide() {
+                slides[currentSlide].style.display = "none";
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].style.display = "block";
+            }
+
+            // Automatically change slides every 2 seconds
+            setInterval(nextSlide, 2000);
+        }
+
+        // Call the function to create the image slider when the page loads
+        window.addEventListener("load", createImageSlider);
+    </script>
+</body>
+</html>
